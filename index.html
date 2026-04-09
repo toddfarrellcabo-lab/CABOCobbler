@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cabo the Cobbler Tool</title>
+  <style>
+    :root {
+      --brand-blue: #005baa;
+      --text-color: #2e2e2e;
+      --light-gray: #f8f9fa;
+      --highlight-color: #d62828;
+      --font-body: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      font-family: var(--font-body);
+      background: var(--light-gray);
+      color: var(--text-color);
+      padding: 2rem 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    header img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto 2rem;
+    }
+    .inline-group {
+      display: flex; flex-wrap: wrap; align-items: center; gap:1rem; margin-top:1rem;
+    }
+    .toggle-buttons {
+      display:flex; gap:1rem; margin-bottom:1rem;
+    }
+    .toggle-buttons button {
+      padding:0.75rem 1.5rem;
+      font-size:1.1rem;
+      font-weight:bold;
+      border:2px solid var(--brand-blue);
+      background:grey;
+      color:white;
+      cursor:pointer;
+      border-radius:4px;
+    }
+    .toggle-buttons button.active {
+      background:var(--brand-blue);
+    }
+    input[type="number"], input[type="text"] {
+      padding:0.4rem;
+      border:1px solid #ccc;
+      border-radius:4px;
+      font-size:1rem;
+      width:4rem;
+    }
+    .live-output {
+      white-space:pre-wrap;
+      padding:1rem;
+      background:#fff;
+      border:1px dashed #999;
+      margin-top:0.5rem;
+      color:var(--text-color);
+      min-height:150px;
+    }
+    .highlight {
+      color:var(--highlight-color);
+      font-weight:bold;
+    }
+    .button-group {
+      display:flex; gap:1rem; margin-top:1.5rem;
+    }
+    .generate-btn, .reset-btn, .translate-btn {
+      flex:1; padding:0.75rem; font-size:1rem; font-weight:600; border-radius:4px; cursor:pointer;
+    }
+    .generate-btn {
+      background:var(--brand-blue); color:white; border:none;
+    }
+    .reset-btn, .translate-btn {
+      background:white; color:var(--brand-blue); border:2px solid var(--brand-blue);
+    }
+    .reset-btn:hover, .translate-btn:hover {
+      background:var(--light-gray);
+    }
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- fixed path to images folder -->
+    <img src="images/Cabo_Cobbler_Tool_Logo.png" alt="Cabo the Cobbler Tool Logo">
+  </header>
+
+  <div class="toggle-buttons">
+    <button id="fiberBtn" class="active">Fiber</button>
+    <button id="fiberFueledBtn">Fiber-Fueled</button>
+  </div>
+
+  <div class="inline-group">
+    <label>Download:</label><input id="down" type="text" placeholder="100">Mbps
+    <label>Upload:</label><input id="up" type="text" placeholder="10">Mbps
+  </div>
+
+  <div class="inline-group">
+    <label>Intro Promo:</label>
+    <input id="introDollars" type="number" placeholder="$">.<input id="introCents" type="number" placeholder="¢">
+    <label>/mo. for</label><input id="introMonths" type="number" placeholder="6">
+    <label>mos.</label>
+    <label><input id="stepUpCheck" type="checkbox"> Step Up Promo</label>
+  </div>
+
+  <div class="inline-group" id="stepUpFields" style="display:none;">
+    <label>2nd Rate:</label><input id="stepUpDollars" type="number" placeholder="$">.<input id="stepUpCents" type="number" placeholder="¢">
+    <label>for months</label><input id="stepUpStart" type="number" placeholder="4"><label>-</label><input id="stepUpEnd" type="number" placeholder="12">
+  </div>
+
+  <div class="inline-group">
+    <label>Reg Rate:</label><input id="regRate" type="text" placeholder="$.00">
+  </div>
+
+  <div class="inline-group" id="equipmentSelection">
+    <label>Equipment:</label>
+    <label><input type="radio" name="equipment" value="eero" checked /> <span id="labelEero">eero</span></label>
+    <label><input type="radio" name="equipment" value="plume" /> <span id="labelPlume">Plume</span></label>
+  </div>
+
+  <div class="inline-group">
+    <label><input id="equipIncluded" type="checkbox"> Equipment Included</label>
+    <label><input id="unlimitedData" type="checkbox" checked> Unlimited Data</label>
+  </div>
+
+  <div class="button-group">
+    <button id="generateButton" class="generate-btn">Generate Disclaimer</button>
+    <button id="resetButton" class="reset-btn">Reset</button>
+  </div>
+
+  <h3>Complete Disclaimer:</h3>
+  <div id="completeDisclaimer" class="live-output"></div>
+
+  <h3>Offer Line:</h3>
+  <div id="offerOutput" class="live-output"></div>
+
+  <div style="margin-top: 10px; text-align: center;">
+    <button id="translateButton" class="translate-btn">Traduce en Español</button>
+  </div>
+
+  <h3 id="spanishHeader" style="display:none; margin-top:2rem;">Descargo de Responsabilidad Completo:</h3>
+  <div id="completeDisclaimerSpanish" class="live-output" style="display:none;"></div>
+
+  <h3 id="spanishOfferHeader" style="display:none;">Línea de Oferta:</h3>
+  <div id="offerOutputSpanish" class="live-output" style="display:none;"></div>
+
+  <script>
+    function highlightEquipment() {
+      const eeroLabel = document.getElementById('labelEero');
+      const plumeLabel = document.getElementById('labelPlume');
+      const selected = document.querySelector('input[name="equipment"]:checked').value;
+      eeroLabel.style.fontWeight = selected === 'eero' ? 'bold' : 'normal';
+      plumeLabel.style.fontWeight = selected === 'plume' ? 'bold' : 'normal';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const fiberBtn = document.getElementById('fiberBtn');
+      const fiberFueledBtn = document.getElementById('fiberFueledBtn');
+      const stepUpCheck = document.getElementById('stepUpCheck');
+      const stepUpFields = document.getElementById('stepUpFields');
+      const generateBtn = document.getElementById('generateButton');
+      const translateBtn = document.getElementById('translateButton');
+      const resetBtn = document.getElementById('resetButton');
+
+      let fiberType = 'Fiber';
+
+      fiberBtn.onclick = () => {
+        fiberType = 'Fiber';
+        fiberBtn.classList.add('active');
+        fiberFueledBtn.classList.remove('active');
+      };
+      fiberFueledBtn.onclick = () => {
+        fiberType = 'Fiber-Fueled';
+        fiberFueledBtn.classList.add('active');
+        fiberBtn.classList.remove('active');
+      };
+
+      stepUpCheck.onchange = () => {
+        stepUpFields.style.display = stepUpCheck.checked ? 'flex' : 'none';
+      };
+
+      highlightEquipment();
+      document.querySelectorAll('input[name="equipment"]').forEach(input => {
+        input.addEventListener('change', highlightEquipment);
+      });
+
+      function generateDisclaimers() {
+        const down = document.getElementById('down').value || 'X';
+        const up = document.getElementById('up').value || 'X';
+        const introD = document.getElementById('introDollars').value || '0';
+        const introC = (document.getElementById('introCents').value || '0').padStart(2,'0');
+        const introM = document.getElementById('introMonths').value || 'X';
+        const isStepUp = stepUpCheck.checked;
+        const stepD = document.getElementById('stepUpDollars').value || '0';
+        const stepC = (document.getElementById('stepUpCents').value || '0').padStart(2,'0');
+        const stepS = document.getElementById('stepUpStart').value || 'X';
+        const stepE = document.getElementById('stepUpEnd').value || 'Y';
+        const regRate = document.getElementById('regRate').value.replace(/[^0-9.]/g, '') || '0.00';
+        const equipType = document.querySelector('input[name="equipment"]:checked').value;
+        const equipIncluded = document.getElementById('equipIncluded').checked;
+        const unlimitedData = document.getElementById('unlimitedData').checked;
+
+        let disc = `*Promotional rate for <span class="highlight">${down} Mbps download</span> x <span class="highlight">${up} Mbps upload</span> Internet service is <span class="highlight">$${introD}.${introC}</span>/mo for the first <span class="highlight">${introM}</span> months`;
+        if (isStepUp) {
+          disc += `, <span class="highlight">$${stepD}.${stepC}</span>/mo for months <span class="highlight">${stepS}-${stepE}</span> and requires Auto Pay with checking/savings account or debit card plus paperless billing.`;
+        } else {
+          disc += `, requires Auto Pay with checking/savings account or debit card plus paperless billing.`;
+        }
+        disc += ` Regular rate <span class="highlight">$${regRate}</span> and is subject to change at any time.`;
+
+        if (unlimitedData) disc += ` Includes <span class="highlight">Unlimited data plan</span>.`;
+        disc += ` Visit www.sparklight.com/legal/internet-aup for details of Sparklight’s Acceptable Use Policy.`;
+        if (!equipIncluded)
+          disc += ` <span class="highlight">Equipment</span>, taxes, surcharges, and fees are <span class="highlight">not included.</span>`;
+        else disc += ` Taxes, surcharges, and fees are not included.`;
+
+        disc += equipType==='eero'
+          ? ` Modem with <span class="highlight">eero Pro 6E</span> lease is <span class="highlight">$14.99/mo</span>.`
+          : ` Modem with <span class="highlight">Plume SuperPod</span> lease is <span class="highlight">$14.99/mo</span>.`;
+
+        disc += ` All services and promotions are not available in all areas. Offer available to new customers only. Restrictions apply. Call for details. ©2025 Cable One, Inc.`;
+
+        if (fiberType==='Fiber-Fueled') {
+          disc += ` †Sparklight Internet is powered by fiber and connected to the premises via coaxial connection or fiber, where available.`;
+        }
+
+        document.getElementById('completeDisclaimer').innerHTML = disc;
+
+        let offer = `*for the first <span class="highlight">${introM}</span> mos.`;
+        if (isStepUp) offer += ` <span class="highlight">$${stepD}.${stepC}</span>/mo for mos. <span class="highlight">${stepS}-${stepE}</span>`;
+        offer += ` with Auto Pay & Paperless billing. Reg Rate <span class="highlight">$${regRate}</span>.`;
+
+        if (unlimitedData) offer += ` <span class="highlight">Unlimited data</span>.`;
+        if (equipIncluded) offer += ` <span class="highlight">Equipment Included</span>.`;
+
+        document.getElementById('offerOutput').innerHTML = offer;
+      }
+
+      function translateDisclaimers() {
+        const disc = document.getElementById('completeDisclaimer').innerText;
+        const off = document.getElementById('offerOutput').innerText;
+        const discEs = disc.replace('Promotional rate for','Tarifa promocional para').replace('Includes Unlimited data plan.','Incluye plan de datos ilimitado.').replace('Offer available to new customers only.','Oferta válida solo para nuevos clientes.');
+        const offEs = off.replace('*for the first','*por los primeros').replace('with Auto Pay & Paperless billing','con Pago Automático y facturación sin papel').replace('Unlimited data','Datos ilimitados');
+        document.getElementById('completeDisclaimerSpanish').innerText = discEs;
+        document.getElementById('offerOutputSpanish').innerText = offEs;
+        document.getElementById('spanishHeader').style.display='block';
+        document.getElementById('spanishOfferHeader').style.display='block';
+        document.getElementById('completeDisclaimerSpanish').style.display='block';
+        document.getElementById('offerOutputSpanish').style.display='block';
+      }
+
+      function resetAll() {
+        ['down','up','introDollars','introCents','introMonths','stepUpDollars','stepUpCents','stepUpStart','stepUpEnd','regRate']
+          .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+        stepUpCheck.checked=false; stepUpFields.style.display='none';
+        document.querySelector('input[name="equipment"][value="eero"]').checked=true;
+        document.getElementById('equipIncluded').checked=false;
+        document.getElementById('unlimitedData').checked=true;
+        fiberType='Fiber'; fiberBtn.classList.add('active'); fiberFueledBtn.classList.remove('active');
+        ['completeDisclaimer','offerOutput','completeDisclaimerSpanish','offerOutputSpanish']
+          .forEach(id => document.getElementById(id).innerText='');
+        document.getElementById('spanishHeader').style.display='none';
+        document.getElementById('spanishOfferHeader').style.display='none';
+        highlightEquipment();
+      }
+
+      generateBtn.onclick = generateDisclaimers;
+      translateBtn.onclick = translateDisclaimers;
+      resetBtn.onclick = resetAll;
+    });
+  </script>
+
+  <footer>
+    <p>a Problematic Software Solution ©2025 | Beta 1.0</p>
+  </footer>
+</body>
+</html>
